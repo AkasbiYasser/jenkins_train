@@ -12,14 +12,26 @@ pipeline {
         DOCKER_TAG = 'v1.0.0'  
         // Docker image name :
         DOCKER_IMAGE_NAME = 'java-mvn-app'  
+        // GitHub repository
+        GITHUB_REPO = 'https://github.com/AkasbiYasser/jenkins_train.git' 
     }
 
     stages {    
 
+        stage('Checkout from GitHub') {
+            steps {
+                script {
+                    withCredentials([usernamePassword(credentialsId: 'github-token', usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_TOKEN')]) {
+                        sh 'git clone https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/AkasbiYasser/jenkins_train.git'
+                    }
+                }
+            }
+        }
+
         stage('Build') {
             steps {
                 sh '''
-                   cd $WORKSPACE/jenkins_train  
+                   cd $WORKSPACE/jenkins_train
                    pwd
                    ls 
                    mvn clean install
@@ -30,7 +42,7 @@ pipeline {
         stage('Generate Artifact') {
             steps {
                 sh '''
-                   cd $WORKSPACE/jenkins_train 
+                   cd $WORKSPACE/jenkins_train
                    mvn package
                 '''
             }
@@ -39,7 +51,7 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 sh '''
-                   cd $WORKSPACE/jenkins_train  
+                   cd $WORKSPACE/jenkins_train
                    docker build -t ${DOCKER_REGISTRY}/${DOCKER_IMAGE_NAME}:${DOCKER_TAG} .
                 '''
             }
