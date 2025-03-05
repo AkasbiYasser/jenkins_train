@@ -9,7 +9,6 @@ pipeline {
         string(name: 'DOCKER_TAG', defaultValue: 'v1.0.0', description: 'Tag for the Docker image')
         string(name: 'DOCKER_IMAGE_NAME', defaultValue: 'java-mvn-app', description: 'Name for the Docker image')
         string(name: 'DOCKER_REGISTRY', defaultValue: 'akasbiyasser', description: 'Docker Registry username')
-        string(name: 'GITHUB_REPO', defaultValue: 'https://github.com/AkasbiYasser/jenkins_train.git', description: 'GitHub repository URL')
     }
 
     stages {    
@@ -17,12 +16,10 @@ pipeline {
         stage('Checkout from GitHub') {
             steps {
                 script {
-                    GITHUB_REPO = params.GITHUB_REPO
+                    def GITHUB_REPO = 'https://github.com/AkasbiYasser/jenkins_train.git'
 
                     withCredentials([usernamePassword(credentialsId: 'github-token', usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_TOKEN')]) {
-                        // Corriger l'URL pour éviter les doublons de 'https://'
-                        def gitUrl = "https://${GITHUB_USER}:${GITHUB_TOKEN}@${GITHUB_REPO.replace("https://", "")}"
-                        sh "git clone ${gitUrl}"
+                        sh "git clone https://${GITHUB_USER}:${GITHUB_TOKEN}@${GITHUB_REPO}"
                     }
                 }
             }
