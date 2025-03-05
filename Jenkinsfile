@@ -5,15 +5,11 @@ pipeline {
         maven 'mvn-3.9.6'
     }
 
-    environment {
-        // Docker Hub username :
-        DOCKER_REGISTRY = 'akasbiyasser'  
-        // Docker image tag :
-        DOCKER_TAG = 'v1.0.0'  
-        // Docker image name :
-        DOCKER_IMAGE_NAME = 'java-mvn-app'  
-        // GitHub repository
-        GITHUB_REPO = 'https://github.com/AkasbiYasser/jenkins_train.git' 
+    parameters {
+        string(name: 'DOCKER_TAG', defaultValue: 'v1.0.0', description: 'Tag for the Docker image')
+        string(name: 'DOCKER_IMAGE_NAME', defaultValue: 'java-mvn-app', description: 'Name for the Docker image')
+        string(name: 'DOCKER_REGISTRY', defaultValue: 'akasbiyasser', description: 'Docker Registry username')
+        string(name: 'GITHUB_REPO', defaultValue: 'https://github.com/AkasbiYasser/jenkins_train.git', description: 'GitHub repository URL')
     }
 
     stages {    
@@ -21,8 +17,11 @@ pipeline {
         stage('Checkout from GitHub') {
             steps {
                 script {
+                    GITHUB_REPO = input message: 'Please confirm the GitHub repository URL or change it:', 
+                                         parameters: [string(defaultValue: 'https://github.com/AkasbiYasser/jenkins_train.git', description: 'GitHub Repository URL', name: 'GITHUB_REPO')]
+                    
                     withCredentials([usernamePassword(credentialsId: 'github-token', usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_TOKEN')]) {
-                        sh 'git clone https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/AkasbiYasser/jenkins_train.git'
+                        sh "git clone https://${GITHUB_USER}:${GITHUB_TOKEN}@${GITHUB_REPO}"
                     }
                 }
             }
@@ -32,8 +31,6 @@ pipeline {
             steps {
                 sh '''
                    cd $WORKSPACE/jenkins_train
-                   pwd
-                   ls 
                    mvn clean install
                 '''
             }
@@ -50,10 +47,12 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                sh '''
-                   cd $WORKSPACE/jenkins_train
-                   docker build -t ${DOCKER_REGISTRY}/${DOCKER_IMAGE_NAME}:${DOCKER_TAG} .
-                '''
+                script {
+                    sh """
+                       cd $WORKSPACE/jenkins_train
+                       docker build -t ${params.DOCKER_REGISTRY}/${params.DOCKER_IMAGE_NAME}:${params.DOCKER_TAG} .
+                    """
+                }
             }
         }
 
@@ -61,9 +60,9 @@ pipeline {
             steps {
                 script {
                     withCredentials([usernamePassword(credentialsId: 'akasbi-cred', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                        sh '''
+                        sh """
                             echo ${DOCKER_PASS} | docker login -u ${DOCKER_USER} --password-stdin
-                        '''
+                        """
                     }
                 }
             }
@@ -72,14 +71,18 @@ pipeline {
         stage('Push Docker Image') {
             steps {
                 script {
-                    sh "docker push ${DOCKER_REGISTRY}/${DOCKER_IMAGE_NAME}:${DOCKER_TAG}"
+                    sh """
+                        docker push ${params.DOCKER_REGISTRY}/${params.DOCKER_IMAGE_NAME}:${params.DOCKER_TAG}
+                    """
                 }
             }
         }
 
         stage('Cleanup') {
             steps {
-                sh "docker rmi ${DOCKER_REGISTRY}/${DOCKER_IMAGE_NAME}:${DOCKER_TAG}"
+                sh """
+                    docker rmi ${params.DOCKER_REGISTRY}/${params.DOCKER_IMAGE_NAME}:${params.DOCKER_TAG}
+                """
             }
         }
     }
