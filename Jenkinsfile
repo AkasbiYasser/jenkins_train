@@ -17,9 +17,16 @@ pipeline {
         stage('Checkout from GitHub') {
             steps {
                 script {
+                    // Demander à l'utilisateur de confirmer ou changer l'URL du dépôt GitHub
                     GITHUB_REPO = input message: 'Please confirm the GitHub repository URL or change it:', 
                                          parameters: [string(defaultValue: 'https://github.com/AkasbiYasser/jenkins_train.git', description: 'GitHub Repository URL', name: 'GITHUB_REPO')]
-                    
+
+                    // Vérifier si l'URL contient déjà "https://", sinon, l'ajouter
+                    if (!GITHUB_REPO.startsWith('https://')) {
+                        GITHUB_REPO = "https://${GITHUB_REPO}"
+                    }
+
+                    // Cloner le dépôt GitHub en utilisant les identifiants et l'URL corrigée
                     withCredentials([usernamePassword(credentialsId: 'github-token', usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_TOKEN')]) {
                         sh "git clone https://${GITHUB_USER}:${GITHUB_TOKEN}@${GITHUB_REPO}"
                     }
@@ -50,7 +57,7 @@ pipeline {
                 script {
                     sh """
                        cd $WORKSPACE/jenkins_train
-                       docker build -t ${params.DOCKER_REGISTRY}/${params.DOCKER_IMAGE_NAME}:${params.DOCKER_TAG} .
+                       docker build -t ${params.DOCKER_REGISTRY}/${params.DOCKER_IMAGE_NAME}:${params.DOCKER_TAG} . 
                     """
                 }
             }
