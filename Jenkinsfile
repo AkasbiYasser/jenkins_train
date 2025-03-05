@@ -7,11 +7,11 @@ pipeline {
 
     environment {
         // Docker Hub username :
-        DOCKER_REGISTRY = 'mohamedaitlahcen'
+        DOCKER_REGISTRY = 'akasbiyasser'  
         // Docker image tag :
-        DOCKER_TAG = 'v1.0.0' 
+        DOCKER_TAG = 'v1.0.0'  
         // Docker image name :
-        DOCKER_IMAGE_NAME = 'java-mvn-app' 
+        DOCKER_IMAGE_NAME = 'java-mvn-app'  
     }
 
     stages {    
@@ -19,7 +19,7 @@ pipeline {
         stage('Build') {
             steps {
                 sh '''
-                   cd $WORKSPACE/Pratical-Example/java-maven-app
+                   cd $WORKSPACE/jenkins_train  
                    pwd
                    ls 
                    mvn clean install
@@ -30,7 +30,7 @@ pipeline {
         stage('Generate Artifact') {
             steps {
                 sh '''
-                   cd $WORKSPACE/Pratical-Example/java-maven-app
+                   cd $WORKSPACE/jenkins_train 
                    mvn package
                 '''
             }
@@ -39,21 +39,22 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 sh '''
-                   cd $WORKSPACE/Pratical-Example/java-maven-app
+                   cd $WORKSPACE/jenkins_train  
                    docker build -t ${DOCKER_REGISTRY}/${DOCKER_IMAGE_NAME}:${DOCKER_TAG} .
                 '''
-                  }
+            }
         }
 
         stage('Login to Docker Registry') {
             steps {
                 script {
-                    withCredentials([usernamePassword(credentialsId: 'docker-hub-cred', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    withCredentials([usernamePassword(credentialsId: 'akasbi-cred', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
                         sh "echo ${DOCKER_PASS} | docker login -u ${DOCKER_USER} --password-stdin"
                     }
                 }
             }
         }
+
         stage('Push Docker Image') {
             steps {
                 script {
@@ -61,11 +62,11 @@ pipeline {
                 }
             }
         }
+
         stage('Cleanup') {
-                steps {
-                    sh "docker rmi ${DOCKER_REGISTRY}/${DOCKER_IMAGE_NAME}:${DOCKER_TAG}"
-                }
+            steps {
+                sh "docker rmi ${DOCKER_REGISTRY}/${DOCKER_IMAGE_NAME}:${DOCKER_TAG}"
+            }
         }
     }
-        
 }
