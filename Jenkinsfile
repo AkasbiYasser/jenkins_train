@@ -20,7 +20,9 @@ pipeline {
                     GITHUB_REPO = params.GITHUB_REPO
 
                     withCredentials([usernamePassword(credentialsId: 'github-token', usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_TOKEN')]) {
-                        sh "git clone https://${GITHUB_USER}:${GITHUB_TOKEN}@${GITHUB_REPO}"
+                        // Corriger l'URL pour éviter les doublons de 'https://'
+                        def gitUrl = "https://${GITHUB_USER}:${GITHUB_TOKEN}@${GITHUB_REPO.replace("https://", "")}"
+                        sh "git clone ${gitUrl}"
                     }
                 }
             }
