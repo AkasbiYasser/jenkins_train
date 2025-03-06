@@ -3,6 +3,10 @@
 
 pipeline {
     agent any
+    
+    tools {
+        maven 'mvn-3.9.6'  
+    }
 
     parameters {
         string(name: 'DOCKER_REGISTRY', defaultValue: 'akasbiyasser', description: 'Docker Registry username')  
